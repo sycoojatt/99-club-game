@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>99Club Game</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      max-width: 400px;
+      width: 90%;
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .balance {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 18px;
+    }
+    .colors {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .color-btn {
+      flex: 1;
+      margin: 0 5px;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      color: white;
+    }
+    .red { background: crimson; }
+    .green { background: green; }
+    .violet { background: darkviolet; }
+    .bet-input, .amount-input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border: none;
+      font-size: 16px;
+    }
+    .play-btn, .deposit-btn, .withdraw-btn {
+      width: 100%;
+      padding: 12px;
+      background: #007bff;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+    .countdown, .result, .history {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .countdown {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .history-list {
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    @media (max-width: 480px) {
+      .color-btn {
+        padding: 10px;
+        font-size: 14px;
+      }
+      .play-btn, .deposit-btn, .withdraw-btn {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>99Club Game</h2>
+    <div class="balance" id="balance">Balance: ₹0</div>
+
+    <input type="number" id="depositAmount" class="amount-input" placeholder="Deposit (Min ₹100)" min="100" />
+    <button class="deposit-btn" onclick="deposit()">Deposit from UPI/Bank</button>
+
+    <input type="number" id="withdrawAmount" class="amount-input" placeholder="Withdraw (Min ₹100)" min="100" />
+    <button class="withdraw-btn" onclick="withdraw()">Withdraw to UPI/Bank</button>
+
+    <div class="colors">
+      <button class="color-btn red" onclick="selectColor('Red')">Red</button>
+      <button class="color-btn green" onclick="selectColor('Green')">Green</button>
+      <button class="color-btn violet" onclick="selectColor('Violet')">Violet</button>
+    </div>
+
+    <input type="number" id="betAmount" class="bet-input" placeholder="Enter Bet Amount" min="1" />
+    <button class="play-btn" onclick="startCountdown()">Play</button>
+
+    <div class="countdown" id="countdown"></div>
+    <div class="result" id="result"></div>
+    <div class="history" id="history">
+      <strong>History:</strong>
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
+
+  <!-- Sounds -->
+  <audio id="winSound" src="https://assets.mixkit.co/sfx/preview/mixkit-video-game-win-2016.mp3"></audio>
+  <audio id="loseSound" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3"></audio>
+  <audio id="clickSound" src="https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3"></audio>
+
+  <script>
+    let balance = 0;
+    let selectedColor = "";
+    const colors = ["Red", "Green", "Violet"];
+    const winSound = document.getElementById("winSound");
+    const loseSound = document.getElementById("loseSound");
+    const clickSound = document.getElementById("clickSound");
+
+    function updateBalanceDisplay() {
+      document.getElementById("balance").innerText = "Balance: ₹" + balance;
+    }
+
+    function selectColor(color) {
+      selectedColor = color;
+      clickSound.play();
+      alert("You selected " + color);
+    }
+
+    function deposit() {
+      const amount = parseInt(document.getElementById("depositAmount").value);
+      if (isNaN(amount) || amount < 100) {
+        alert("Minimum deposit is ₹100");
+        return;
+      }
+      balance += amount;
+      updateBalanceDisplay();
+      alert(`₹${amount} deposited successfully.`);
+      document.getElementById("depositAmount").value = "";
+    }
+
+    function withdraw() {
+      const amount = parseInt(document.getElementById("withdrawAmount").value);
+      if (isNaN(amount) || amount < 100) {
+        alert("Minimum withdraw is ₹100");
+        return;
+      }
+      if (amount > balance) {
+        alert("Insufficient balance for withdrawal");
+        return;
+      }
+      balance -= amount;
+      updateBalanceDisplay();
+      alert(`₹${amount} withdrawn successfully.`);
+      document.getElementById("withdrawAmount").value = "";
+    }
+
+    function startCountdown() {
+      const bet = parseInt(document.getElementById("betAmount").value);
+      if (!selectedColor) {
+        alert("Please select a color.");
+        return;
+      }
+      if (isNaN(bet) || bet <= 0) {
+        alert("Enter a valid bet amount.");
+        return;
+      }
+      if (bet > balance) {
+        alert("Insufficient balance!");
+        return;
+      }
+
+      let timeLeft = 5;
+      const countdownDiv = document.getElementById("countdown");
+      countdownDiv.innerText = `Result in ${timeLeft}...`;
+
+      const timer = setInterval(() => {
+        timeLeft--;
+        countdownDiv.innerText = `Result in ${timeLeft}...`;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          countdownDiv.innerText = "";
+          playGame(bet);
+        }
+      }, 1000);
+    }
+
+    function playGame(bet) {
+      const resultColor = colors[Math.floor(Math.random() * colors.length)];
+      const resultDiv = document.getElementById("result");
+      const historyList = document.getElementById("historyList");
+
+      if (selectedColor === resultColor) {
+        balance += bet;
+        resultDiv.innerHTML = `🎉 You Won! Result: <strong>${resultColor}</strong>`;
+        winSound.play();
+      } else {
+        balance -= bet;
+        resultDiv.innerHTML = `😢 You Lost! Result: <strong>${resultColor}</strong>`;
+        loseSound.play();
+      }
+
+      updateBalanceDisplay();
+      historyList.innerHTML = resultColor + " | " + historyList.innerHTML;
+      selectedColor = "";
+      document.getElementById("betAmount").value = "";
+    }
+  </script>
+</body>
+</html>
